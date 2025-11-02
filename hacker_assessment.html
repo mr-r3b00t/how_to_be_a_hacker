@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hacker Knowledge Assessment</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        h1 {
+            text-align: center;
+            text-shadow: 0 0 10px #00ff00;
+            animation: flicker 1.5s infinite alternate;
+        }
+        @keyframes flicker {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            box-shadow: 0 0 20px #00ff00;
+        }
+        .question {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-left: 3px solid #00ff00;
+        }
+        label {
+            display: block;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            margin: 10px;
+            box-shadow: 0 0 10px #00ff00;
+        }
+        button:hover {
+            background: #00cc00;
+            box-shadow: 0 0 20px #00ff00;
+        }
+        #result {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+        #certificate-section {
+            display: none;
+            text-align: center;
+        }
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+    </style>
+</head>
+<body>
+    <canvas class="matrix-bg" id="matrix"></canvas>
+    <div class="quiz-container">
+        <h1>🔥 HACKER KNOWLEDGE ASSESSMENT 🔥</h1>
+        <p style="text-align: center;">Prove your skills. 80%+ to unlock the cert. No traces left behind.</p>
+        
+        <form id="quizForm">
+            <div class="question">
+                <h3>Q1: What does SQL Injection exploit?</h3>
+                <label><input type="radio" name="q1" value="a"> User authentication flaws</label>
+                <label><input type="radio" name="q1" value="b"> Input sanitization in databases</label>
+                <label><input type="radio" name="q1" value="c"> Network packet sniffing</label>
+                <label><input type="radio" name="q1" value="d"> File permission errors</label>
+            </div>
+            
+            <div class="question">
+                <h3>Q2: Phishing attacks primarily target what?</h3>
+                <label><input type="radio" name="q2" value="a"> Hardware vulnerabilities</label>
+                <label><input type="radio" name="q2" value="b"> Social engineering</label>
+                <label><input type="radio" name="q2" value="c"> Buffer overflows</label>
+                <label><input type="radio" name="q2" value="d"> Encryption keys</label>
+            </div>
+            
+            <div class="question">
+                <h3>Q3: What is XSS (Cross-Site Scripting)?</h3>
+                <label><input type="radio" name="q3" value="a"> A type of malware</label>
+                <label><input type="radio" name="q3" value="b"> Injecting malicious scripts into web pages</label>
+                <label><input type="radio" name="q3" value="c"> A denial-of-service attack</label>
+                <label><input type="radio" name="q3" value="d"> Password cracking tool</label>
+            </div>
+            
+            <div class="question">
+                <h3>Q4: In cryptography, what does AES stand for?</h3>
+                <label><input type="radio" name="q4" value="a"> Advanced Encryption Standard</label>
+                <label><input type="radio" name="q4" value="b"> Automated Encryption System</label>
+                <label><input type="radio" name="q4" value="c"> Asymmetric Encoding Service</label>
+                <label><input type="radio" name="q4" value="d"> Access Encryption Suite</label>
+            </div>
+            
+            <div class="question">
+                <h3>Q5: What is a zero-day vulnerability?</h3>
+                <label><input type="radio" name="q5" value="a"> A bug fixed on day zero</label>
+                <label><input type="radio" name="q5" value="b"> An exploit for an unknown vulnerability</label>
+                <label><input type="radio" name="q5" value="c"> A 24-hour attack window</label>
+                <label><input type="radio" name="q5" value="d"> Free software exploit</label>
+            </div>
+            
+            <button type="button" onclick="submitQuiz()">SUBMIT & SCORE</button>
+        </form>
+        
+        <div id="result"></div>
+        
+        <div id="certificate-section">
+            <h2 style="color: #ff0000; text-shadow: 0 0 10px #ff0000;">ACCESS GRANTED: CERTIFICATE UNLOCKED</h2>
+            <input type="text" id="userName" placeholder="Enter your hacker alias" style="background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 5px;">
+            <br>
+            <button onclick="generateCertificate()">GENERATE PDF CERT</button>
+        </div>
+    </div>
+
+    <script>
+        // Matrix rain effect
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#00ff00';
+            ctx.font = fontSize + 'px monospace';
+            drops.forEach((y, i) => {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, y * fontSize);
+                if (y * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            });
+        }
+        setInterval(drawMatrix, 50);
+
+        // Quiz logic
+        function submitQuiz() {
+            const form = document.getElementById('quizForm');
+            const formData = new FormData(form);
+            const answers = {
+                q1: 'b',
+                q2: 'b',
+                q3: 'b',
+                q4: 'a',
+                q5: 'b'
+            };
+            let score = 0;
+            let total = 0;
+            for (let key in answers) {
+                const selected = formData.get(key);
+                if (selected === answers[key]) score++;
+                total++;
+            }
+            const percentage = (score / total) * 100;
+            const resultDiv = document.getElementById('result');
+            if (percentage >= 80) {
+                resultDiv.innerHTML = `<span style="color: #00ff00; font-size: 24px;">PASS: ${score}/${total} (${percentage.toFixed(0)}%) - Elite Hacker Status Achieved!</span>`;
+                document.getElementById('certificate-section').style.display = 'block';
+            } else {
+                resultDiv.innerHTML = `<span style="color: #ff0000; font-size: 24px;">FAIL: ${score}/${total} (${percentage.toFixed(0)}%) - Train harder, script kiddie.</span>`;
+            }
+        }
+
+        // Generate PDF Certificate
+        function generateCertificate() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const name = document.getElementById('userName').value || 'Anonymous Hacker';
+            
+            // Hacker theme PDF
+            doc.setFillColor(0, 0, 0);
+            doc.rect(0, 0, 210, 297, 'F');
+            doc.setTextColor(0, 255, 0);
+            doc.setFont('courier');
+            doc.setFontSize(20);
+            doc.text('HACKER CERTIFICATION AUTHORITY', 105, 50, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text('This certifies that', 105, 80, { align: 'center' });
+            doc.setFontSize(16);
+            doc.setTextColor(255, 0, 0);
+            doc.text(name.toUpperCase(), 105, 100, { align: 'center' });
+            doc.setTextColor(0, 255, 0);
+            doc.setFontSize(12);
+            doc.text('has demonstrated elite knowledge in cybersecurity and hacking arts.', 105, 120, { align: 'center', maxWidth: 180 });
+            doc.text('Score: 80%+ on Hacker Assessment | No exploits detected.', 105, 140, { align: 'center', maxWidth: 180 });
+            doc.text('Issued: ' + new Date().toLocaleDateString(), 105, 160, { align: 'center' });
+            doc.text('--- ACCESS GRANTED ---', 105, 200, { align: 'center' });
+            doc.text('Do not distribute. Traceable to zero-day origins.', 105, 220, { align: 'center', maxWidth: 180 });
+            
+            // Add some "matrix" lines
+            for (let i = 0; i < 10; i++) {
+                doc.setTextColor(0, 255, 0, Math.random() * 0.5 + 0.5);
+                doc.text('01', Math.random() * 210, Math.random() * 297);
+            }
+            
+            doc.save('hacker_cert_' + name.replace(/\s+/g, '_') + '.pdf');
+        }
+    </script>
+</body>
+</html>
